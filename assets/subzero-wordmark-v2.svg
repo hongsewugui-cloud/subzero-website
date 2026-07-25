@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" role="img" aria-labelledby="title desc">
+  <title id="title">SUBZERO wordmark</title>
+  <desc id="desc">White SUBZERO lettering on a red field with black diagonal underground poster stripes.</desc>
+  <rect width="1600" height="520" fill="#e9342d"/>
+  <g fill="#111111" opacity=".96">
+    <path d="M1120 0h160L980 520H820z"/>
+    <path d="M1390 0h96L1248 520h-96z"/>
+    <path d="M1544 0h56v520h-192z"/>
+  </g>
+  <g fill="#f6f4ee" stroke="#f6f4ee" stroke-width="3" paint-order="stroke" text-anchor="middle" font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" font-size="244" font-weight="900" letter-spacing="-6">
+    <text x="800" y="332">SUBZERO</text>
+  </g>
+  <path d="M92 410H1508" stroke="#111111" stroke-width="6" opacity=".22"/>
+</svg>

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">SUBZERO merch reference board</title>
+  <desc id="desc">Six underground comic style references for SUBZERO T-shirts, hoodies, baseball caps and workwear hats.</desc>
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#111" opacity=".18"/>
+    </pattern>
+    <pattern id="red-stripes" width="38" height="38" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
+      <rect width="38" height="38" fill="#e9342d"/>
+      <rect width="13" height="38" fill="#111" opacity=".9"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="8" dy="8" stdDeviation="0" flood-color="#111"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1200" fill="#f3f0e8"/>
+  <rect width="1600" height="1200" fill="url(#dots)"/>
+  <rect x="34" y="30" width="1532" height="1140" fill="none" stroke="#111" stroke-width="8"/>
+
+  <rect x="58" y="56" width="1484" height="154" fill="url(#red-stripes)" stroke="#111" stroke-width="7"/>
+  <text x="86" y="100" fill="#f3f0e8" font-family="monospace" font-weight="900" font-size="18" letter-spacing="4">SUBZERO / FIRST MERCH SYSTEM / 001</text>
+  <text x="800" y="184" fill="#f3f0e8" text-anchor="middle" font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" font-weight="900" font-size="126" letter-spacing="-5">SUBZERO</text>
+
+  <g transform="translate(58 250)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">01 / T-SHIRT / BLACK</text>
+    <path d="M140 108L204 80H270L334 108L394 150L350 214L314 190V330H160V190L124 214L80 150Z" fill="#111" stroke="#111" stroke-width="8" stroke-linejoin="round" filter="url(#shadow)"/>
+    <rect x="166" y="220" width="142" height="50" fill="#e9342d"/>
+    <text x="237" y="255" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="31" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">WHITE PRINT / OVERSIZED BACK MARK</text>
+  </g>
+
+  <g transform="translate(563 250)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">02 / T-SHIRT / WHITE</text>
+    <path d="M140 108L204 80H270L334 108L394 150L350 214L314 190V330H160V190L124 214L80 150Z" fill="#fff" stroke="#111" stroke-width="8" stroke-linejoin="round" filter="url(#shadow)"/>
+    <rect x="166" y="220" width="142" height="50" fill="#111"/>
+    <text x="237" y="255" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="31" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">BLACK PRINT / RED SIDE LABEL</text>
+  </g>
+
+  <g transform="translate(1068 250)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">03 / OVERSIZED HOODIE</text>
+    <path d="M160 116Q237 65 314 116L366 160L338 232L310 212V340H164V212L136 232L108 160Z" fill="#111" stroke="#111" stroke-width="8" stroke-linejoin="round" filter="url(#shadow)"/>
+    <path d="M164 118Q237 172 310 118V210H164Z" fill="#e9342d"/>
+    <text x="237" y="178" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="28" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">BLACK / RED PANEL / HEAVY FLEECE</text>
+  </g>
+
+  <g transform="translate(58 690)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">04 / OVERSIZED HOODIE</text>
+    <path d="M160 116Q237 65 314 116L366 160L338 232L310 212V340H164V212L136 232L108 160Z" fill="#fff" stroke="#111" stroke-width="8" stroke-linejoin="round" filter="url(#shadow)"/>
+    <path d="M164 118Q237 172 310 118V210H164Z" fill="#111"/>
+    <text x="237" y="178" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="28" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">WHITE / BLACK PANEL / RED DETAIL</text>
+  </g>
+
+  <g transform="translate(563 690)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">05 / BASEBALL CAP</text>
+    <path d="M118 222Q118 120 237 104Q356 120 356 222Z" fill="#111" stroke="#111" stroke-width="8" filter="url(#shadow)"/>
+    <path d="M236 222Q318 207 406 232Q330 276 236 250Z" fill="#111" stroke="#111" stroke-width="8"/>
+    <rect x="166" y="166" width="142" height="42" fill="#e9342d"/>
+    <text x="237" y="195" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="26" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">BLACK / WHITE EMBROIDERY / RED PATCH OPTION</text>
+  </g>
+
+  <g transform="translate(1068 690)">
+    <rect width="474" height="400" fill="#f3f0e8" stroke="#111" stroke-width="6"/>
+    <text x="24" y="42" fill="#111" font-family="monospace" font-weight="900" font-size="18">06 / WORKWEAR HAT</text>
+    <path d="M112 184H362L340 310H134Z" fill="#77736c" stroke="#111" stroke-width="8" filter="url(#shadow)"/>
+    <path d="M112 184Q237 122 362 184" fill="none" stroke="#111" stroke-width="14"/>
+    <path d="M102 298H372" stroke="#111" stroke-width="18"/>
+    <rect x="175" y="205" width="124" height="45" fill="#e9342d" stroke="#111" stroke-width="4"/>
+    <text x="237" y="236" fill="#f3f0e8" text-anchor="middle" font-family="Impact, sans-serif" font-weight="900" font-size="25" letter-spacing="-1">SUBZERO</text>
+    <text x="24" y="370" fill="#e9342d" font-family="monospace" font-weight="900" font-size="14">GREY CANVAS / BLACK EDGE / WOVEN LABEL</text>
+  </g>
+</svg>

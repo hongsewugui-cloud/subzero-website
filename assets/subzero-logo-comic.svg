@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" role="img" aria-labelledby="title desc">
+  <title id="title">SUBZERO comic outline logo</title>
+  <desc id="desc">Original SUBZERO logo with a white field and heavy black outlines.</desc>
+  <defs>
+    <filter id="logo-outline" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        in="SourceGraphic"
+        type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0 1
+                .333 .333 .333 0 0"
+        result="white-shape" />
+      <feMorphology in="white-shape" operator="dilate" radius="12" result="expanded-shape" />
+      <feFlood flood-color="#090909" result="ink" />
+      <feComposite in="ink" in2="expanded-shape" operator="in" result="outline" />
+      <feMerge>
+        <feMergeNode in="outline" />
+        <feMergeNode in="white-shape" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1254" height="1254" fill="#ffffff" />
+  <image href="subzero-logo.png" width="1254" height="1254" filter="url(#logo-outline)" />
+</svg>
