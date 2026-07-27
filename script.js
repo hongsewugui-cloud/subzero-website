@@ -344,6 +344,13 @@ syncFocusOther();
 function createSubmissionCard(entry) {
   const card = document.createElement("article");
   card.className = "submission-card";
+  const reviewedText = entry.status === "rejected"
+    ? "已拒绝，不会公开到网站。"
+    : entry.status === "approved"
+      ? entry.published_member_id
+        ? "已批准并公开。"
+        : "已批准，尚未公开。"
+      : "待审核。";
   card.innerHTML = `
     <strong>${entry.name}</strong>
     <p>${entry.focus}</p>
@@ -353,9 +360,21 @@ function createSubmissionCard(entry) {
       <span>${entry.status}</span>
       <span>${new Date(entry.created_at).toLocaleString("zh-CN")}</span>
     </div>
+    <p class="review-note">${reviewedText}</p>
   `;
   const actions = document.createElement("div");
   actions.className = "submission-actions";
+
+  if (entry.status === "rejected") {
+    const rejectedBadge = document.createElement("button");
+    rejectedBadge.type = "button";
+    rejectedBadge.textContent = "已拒绝";
+    rejectedBadge.disabled = true;
+    actions.appendChild(rejectedBadge);
+    card.appendChild(actions);
+    return card;
+  }
+
   const canRepublish = !entry.published_member_id && (entry.status === "approved" || entry.status === "removed");
 
   const publishButton = document.createElement("button");
@@ -426,6 +445,7 @@ async function loadSubmissions() {
 }
 
 async function reviewSubmission(id, decision, publish) {
+  adminStatus.textContent = decision === "rejected" ? "正在拒绝这条申请…" : publish ? "正在批准并公开…" : "正在批准申请…";
   try {
     await fetchJson("/api/admin/review", {
       method: "POST",
@@ -436,6 +456,7 @@ async function reviewSubmission(id, decision, publish) {
       body: JSON.stringify({ id, decision, publish }),
     });
     await Promise.all([loadSubmissions(), loadPublicContent()]);
+    adminStatus.textContent = decision === "rejected" ? "已拒绝，这条申请不会公开到网站。" : publish ? "已批准并公开，公开成员列表已更新。" : "已批准，暂未公开。";
   } catch (error) {
     adminStatus.textContent = "操作失败，请确认本地服务和管理员口令是否正确。";
   }
