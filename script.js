@@ -50,6 +50,12 @@ const adminAccess = document.querySelector("#admin-access");
 const adminLock = document.querySelector("#admin-lock");
 const adminPanel = document.querySelector("#admin-panel");
 const adminStatus = document.querySelector("#admin-status");
+const releaseSubmissionList = document.querySelector("#release-submission-list");
+const releaseHistoryList = document.querySelector("#release-history-list");
+const releaseHistoryPagination = document.querySelector("#release-history-pagination");
+const releasePrev = document.querySelector("#release-prev");
+const releaseNext = document.querySelector("#release-next");
+const releasePageStatus = document.querySelector("#release-page-status");
 const submissionList = document.querySelector("#submission-list");
 const reviewHistoryList = document.querySelector("#review-history-list");
 const reviewHistoryPagination = document.querySelector("#review-history-pagination");
@@ -67,6 +73,8 @@ let musicEnabled = false;
 let adminKey = sessionStorage.getItem("subzero-admin-key") || "";
 let reviewHistoryPage = 0;
 const REVIEW_HISTORY_PAGE_SIZE = 4;
+let releaseHistoryPage = 0;
+const RELEASE_HISTORY_PAGE_SIZE = 4;
 
 const fallbackContent = {
   releases: [
@@ -370,8 +378,8 @@ releaseForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     releaseForm.reset();
-    releaseStatus.textContent = "作品已提交，系统已按类型分流到音乐档案或视觉档案。";
-    await loadPublicContent();
+    releaseStatus.textContent = "作品已提交，正在等待管理员审核。审核通过后会自动进入音乐档案或视觉档案。";
+    if (adminKey) await loadSubmissions();
   } catch (error) {
     releaseStatus.textContent = HAS_API ? "上传失败，请稍后再试。" : "上传失败。当前页面还没有连接到作品服务。";
   }
@@ -457,6 +465,57 @@ function createPublishedMemberCard(entry) {
   return card;
 }
 
+function createReleaseSubmissionCard(entry) {
+  const card = document.createElement("article");
+  card.className = "submission-card";
+  const creator = entry.meta?.[0] || "未知作者";
+  const category = entry.meta?.[1] || "未分类";
+  const statusText = entry.status === "approved" ? "已公开到作品档案。" : entry.status === "rejected" ? "已拒绝，不会进入公开作品区。" : "待审核。";
+  card.innerHTML = `
+    <strong>${entry.title}</strong>
+    <p>${entry.summary}</p>
+    <div class="submission-meta">
+      <span>${creator}</span>
+      <span>${category}</span>
+      <span>${entry.section === "music" ? "音乐档案" : "视觉档案"}</span>
+      <span>${entry.status || "pending"}</span>
+    </div>
+    <p>${entry.contact}</p>
+    <p class="review-note">${statusText}</p>
+  `;
+  const actions = document.createElement("div");
+  actions.className = "submission-actions";
+  if (entry.status === "approved") {
+    const approvedBadge = document.createElement("button");
+    approvedBadge.type = "button";
+    approvedBadge.textContent = "已发布";
+    approvedBadge.disabled = true;
+    actions.appendChild(approvedBadge);
+    card.appendChild(actions);
+    return card;
+  }
+  if (entry.status === "rejected") {
+    const rejectedBadge = document.createElement("button");
+    rejectedBadge.type = "button";
+    rejectedBadge.textContent = "已拒绝";
+    rejectedBadge.disabled = true;
+    actions.appendChild(rejectedBadge);
+    card.appendChild(actions);
+    return card;
+  }
+  const approveButton = document.createElement("button");
+  approveButton.type = "button";
+  approveButton.textContent = "批准发布";
+  approveButton.addEventListener("click", () => reviewRelease(entry.id, "approved"));
+  const rejectButton = document.createElement("button");
+  rejectButton.type = "button";
+  rejectButton.textContent = "拒绝";
+  rejectButton.addEventListener("click", () => reviewRelease(entry.id, "rejected"));
+  actions.append(approveButton, rejectButton);
+  card.appendChild(actions);
+  return card;
+}
+
 async function loadSubmissions() {
   if (!adminKey) return;
   adminStatus.textContent = "正在读取申请列表…";
@@ -464,6 +523,31 @@ async function loadSubmissions() {
     const payload = await fetchJson("/api/admin/submissions", {
       headers: { "X-Admin-Key": adminKey },
     });
+    const pendingReleaseSubmissions = payload.release_submissions.filter((entry) => (entry.status || "pending") === "pending");
+    const reviewedReleases = payload.release_submissions.filter((entry) => (entry.status || "pending") !== "pending");
+    releaseSubmissionList.innerHTML = "";
+    if (!pendingReleaseSubmissions.length) {
+      releaseSubmissionList.innerHTML = "<div class='submission-card'><strong>暂无作品投稿</strong><p>成员提交作品后，这里会显示待审核内容。</p></div>";
+    } else {
+      pendingReleaseSubmissions.forEach((entry) => releaseSubmissionList.appendChild(createReleaseSubmissionCard(entry)));
+    }
+    releaseHistoryList.innerHTML = "";
+    const releaseTotalPages = Math.max(1, Math.ceil(reviewedReleases.length / RELEASE_HISTORY_PAGE_SIZE));
+    releaseHistoryPage = Math.min(releaseHistoryPage, releaseTotalPages - 1);
+    const releasePageItems = reviewedReleases.slice(
+      releaseHistoryPage * RELEASE_HISTORY_PAGE_SIZE,
+      releaseHistoryPage * RELEASE_HISTORY_PAGE_SIZE + RELEASE_HISTORY_PAGE_SIZE
+    );
+    if (!reviewedReleases.length) {
+      releaseHistoryList.innerHTML = "<div class='submission-card'><strong>暂无作品审核记录</strong><p>批准或拒绝后的作品记录会显示在这里。</p></div>";
+      releaseHistoryPagination.hidden = true;
+    } else {
+      releasePageItems.forEach((entry) => releaseHistoryList.appendChild(createReleaseSubmissionCard(entry)));
+      releaseHistoryPagination.hidden = false;
+      releasePrev.disabled = releaseHistoryPage === 0;
+      releaseNext.disabled = releaseHistoryPage >= releaseTotalPages - 1;
+      releasePageStatus.textContent = `第 ${releaseHistoryPage + 1} 页 / 共 ${releaseTotalPages} 页`;
+    }
     const pendingSubmissions = payload.submissions.filter((entry) => entry.status === "pending");
     const reviewHistory = payload.submissions.filter((entry) => entry.status !== "pending");
     submissionList.innerHTML = "";
@@ -520,6 +604,24 @@ async function reviewSubmission(id, decision, publish) {
   }
 }
 
+async function reviewRelease(id, decision) {
+  adminStatus.textContent = decision === "rejected" ? "正在拒绝这条作品投稿…" : "正在批准并发布作品…";
+  try {
+    await fetchJson("/api/admin/review-release", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Key": adminKey,
+      },
+      body: JSON.stringify({ id, decision }),
+    });
+    await Promise.all([loadSubmissions(), loadPublicContent()]);
+    adminStatus.textContent = decision === "rejected" ? "作品已拒绝，不会公开显示。" : "作品已批准，并已发布到对应档案区。";
+  } catch (error) {
+    adminStatus.textContent = "作品审核失败，请确认后台服务和管理员口令是否正确。";
+  }
+}
+
 reviewPrev.addEventListener("click", async () => {
   if (reviewHistoryPage === 0) return;
   reviewHistoryPage -= 1;
@@ -528,6 +630,17 @@ reviewPrev.addEventListener("click", async () => {
 
 reviewNext.addEventListener("click", async () => {
   reviewHistoryPage += 1;
+  await loadSubmissions();
+});
+
+releasePrev.addEventListener("click", async () => {
+  if (releaseHistoryPage === 0) return;
+  releaseHistoryPage -= 1;
+  await loadSubmissions();
+});
+
+releaseNext.addEventListener("click", async () => {
+  releaseHistoryPage += 1;
   await loadSubmissions();
 });
 

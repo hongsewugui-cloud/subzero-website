@@ -91,7 +91,8 @@ def clone_default_content():
 
 def build_public_content(published_members, uploaded_releases):
     content = clone_default_content()
-    content["releases"] = list(uploaded_releases) + content["releases"]
+    approved_releases = [item for item in uploaded_releases if item.get("status", "approved") == "approved"]
+    content["releases"] = approved_releases + content["releases"]
     content["members"] = content["members"] + list(published_members)
     return content
 
@@ -171,12 +172,28 @@ class JsonStorage:
             "section": infer_release_section(category),
             "contact": contact,
             "created_at": utc_now(),
+            "status": "pending",
+            "reviewed_at": None,
+            "published_at": None,
         }
         with DATA_LOCK:
             releases = load_json(RELEASES_FILE)
             releases.insert(0, entry)
             save_json(RELEASES_FILE, releases)
         return entry
+
+    def review_release(self, target_id, decision):
+        with DATA_LOCK:
+            releases = load_json(RELEASES_FILE)
+            target = next((item for item in releases if item["id"] == target_id), None)
+            if not target:
+                return None
+            reviewed_at = utc_now()
+            target["status"] = decision
+            target["reviewed_at"] = reviewed_at
+            target["published_at"] = reviewed_at if decision == "approved" else None
+            save_json(RELEASES_FILE, releases)
+        return target
 
     def review_submission(self, target_id, decision, publish):
         with DATA_LOCK:
@@ -276,11 +293,17 @@ class PostgresStorage:
                         meta text not null,
                         section text not null default 'visual',
                         contact text not null,
-                        created_at text not null
+                        created_at text not null,
+                        status text not null default 'pending',
+                        reviewed_at text,
+                        published_at text
                     )
                     """
                 )
                 cursor.execute("alter table releases add column if not exists section text not null default 'visual'")
+                cursor.execute("alter table releases add column if not exists status text not null default 'pending'")
+                cursor.execute("alter table releases add column if not exists reviewed_at text")
+                cursor.execute("alter table releases add column if not exists published_at text")
             conn.commit()
 
     def public_content(self):
@@ -289,7 +312,10 @@ class PostgresStorage:
     def list_releases(self):
         with self._connect() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute("select id, title, summary, meta, section, contact, created_at from releases order by created_at desc")
+                cursor.execute(
+                    "select id, title, summary, meta, section, contact, created_at, status, reviewed_at, published_at "
+                    "from releases order by created_at desc"
+                )
                 rows = [dict(row) for row in cursor.fetchall()]
         for row in rows:
             try:
@@ -297,6 +323,7 @@ class PostgresStorage:
             except json.JSONDecodeError:
                 row["meta"] = []
             row["section"] = row.get("section") or infer_release_section(" ".join(row["meta"]))
+            row["status"] = row.get("status") or "approved"
         return rows
 
     def list_submissions(self):
@@ -354,13 +381,16 @@ class PostgresStorage:
             "section": infer_release_section(category),
             "contact": contact,
             "created_at": utc_now(),
+            "status": "pending",
+            "reviewed_at": None,
+            "published_at": None,
         }
         with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    insert into releases (id, title, summary, meta, section, contact, created_at)
-                    values (%s, %s, %s, %s, %s, %s, %s)
+                    insert into releases (id, title, summary, meta, section, contact, created_at, status, reviewed_at, published_at)
+                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         entry["id"],
@@ -370,10 +400,42 @@ class PostgresStorage:
                         entry["section"],
                         entry["contact"],
                         entry["created_at"],
+                        entry["status"],
+                        entry["reviewed_at"],
+                        entry["published_at"],
                     ),
                 )
             conn.commit()
         return entry
+
+    def review_release(self, target_id, decision):
+        with self._connect() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute("select * from releases where id = %s for update", (target_id,))
+                target = cursor.fetchone()
+                if not target:
+                    conn.rollback()
+                    return None
+                reviewed_at = utc_now()
+                published_at = reviewed_at if decision == "approved" else None
+                cursor.execute(
+                    """
+                    update releases
+                    set status = %s, reviewed_at = %s, published_at = %s
+                    where id = %s
+                    """,
+                    (decision, reviewed_at, published_at, target_id),
+                )
+            conn.commit()
+        updated = dict(target)
+        updated["status"] = decision
+        updated["reviewed_at"] = reviewed_at
+        updated["published_at"] = published_at
+        try:
+            updated["meta"] = json.loads(updated.get("meta", "[]"))
+        except json.JSONDecodeError:
+            updated["meta"] = []
+        return updated
 
     def review_submission(self, target_id, decision, publish):
         with self._connect() as conn:
@@ -476,6 +538,7 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
             self._send_json(
                 {
                     "submissions": STORAGE.list_submissions(),
+                    "release_submissions": STORAGE.list_releases(),
                     "published_members": STORAGE.list_published_members(),
                 }
             )
@@ -497,6 +560,12 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
                 self._send_json({"error": "forbidden"}, HTTPStatus.FORBIDDEN)
                 return
             self._handle_review()
+            return
+        if parsed.path == "/api/admin/review-release":
+            if not self._is_admin(parsed):
+                self._send_json({"error": "forbidden"}, HTTPStatus.FORBIDDEN)
+                return
+            self._handle_release_review()
             return
         if parsed.path == "/api/admin/remove-member":
             if not self._is_admin(parsed):
@@ -530,6 +599,19 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
             return
         entry = STORAGE.create_release(title, creator, category, summary, contact)
         self._send_json({"ok": True, "id": entry["id"]}, HTTPStatus.CREATED)
+
+    def _handle_release_review(self):
+        payload = self._read_json()
+        target_id = str(payload.get("id", "")).strip()
+        decision = str(payload.get("decision", "")).strip()
+        if decision not in {"approved", "rejected"} or not target_id:
+            self._send_json({"error": "invalid payload"}, HTTPStatus.BAD_REQUEST)
+            return
+        target = STORAGE.review_release(target_id, decision)
+        if not target:
+            self._send_json({"error": "release not found"}, HTTPStatus.NOT_FOUND)
+            return
+        self._send_json({"ok": True})
 
     def _handle_review(self):
         payload = self._read_json()
