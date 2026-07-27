@@ -2,12 +2,13 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 if (window.location.hash) history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
 window.scrollTo({ top: 0, behavior: "auto" });
 
-const API_ROOT = window.location.protocol === "file:" ? "http://127.0.0.1:8765" : "";
-const IS_LOCAL_API =
-  window.location.protocol === "file:" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "localhost";
-const CONTENT_ENDPOINT = IS_LOCAL_API ? `${API_ROOT}/api/content` : "./data/content.json";
+const REMOTE_API_ROOT = window.SUBZERO_API_ROOT || "https://subzero-website-api.onrender.com";
+const IS_FILE_PREVIEW = window.location.protocol === "file:";
+const IS_LOCAL_HOST = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const IS_GITHUB_PAGES = window.location.hostname === "hongsewugui-cloud.github.io";
+const API_ROOT = IS_FILE_PREVIEW ? "http://127.0.0.1:8765" : IS_GITHUB_PAGES ? REMOTE_API_ROOT : "";
+const HAS_API = IS_FILE_PREVIEW || IS_LOCAL_HOST || IS_GITHUB_PAGES || window.location.protocol.startsWith("http");
+const CONTENT_ENDPOINT = `${API_ROOT}/api/content`;
 const intro = document.querySelector("#intro");
 const skipIntro = document.querySelector("#skip-intro");
 const replayIntro = document.querySelector("#replay-intro");
@@ -319,10 +320,6 @@ async function loadPublicContent() {
 
 applyForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!IS_LOCAL_API) {
-    applyStatus.textContent = "公开分享版暂不支持直接提交申请。请联系主理人微信 CH_576。";
-    return;
-  }
   const formData = new FormData(applyForm);
   const payload = Object.fromEntries(formData.entries());
   payload.focus = payload.focus === "其他" ? String(payload.focus_other || "").trim() : payload.focus;
@@ -337,7 +334,7 @@ applyForm.addEventListener("submit", async (event) => {
     applyForm.reset();
     applyStatus.textContent = "申请已提交。现在只有主理人能在管理台看见，审核通过后才会公开到网站。";
   } catch (error) {
-    applyStatus.textContent = "提交失败。请先启动本地服务，再重新提交。";
+    applyStatus.textContent = HAS_API ? "提交失败。请稍后重试，或直接联系主理人微信 CH_576。" : "提交失败。当前页面还没有连接到申请服务。";
   }
 });
 
@@ -461,10 +458,6 @@ async function removePublishedMember(id) {
 }
 
 adminAccess.addEventListener("click", async () => {
-  if (!IS_LOCAL_API) {
-    adminStatus.textContent = "公开分享版不开放管理台，请在本地服务版操作。";
-    return;
-  }
   const input = window.prompt("输入管理员口令后查看待审核申请。");
   if (!input) return;
   adminKey = input.trim();
@@ -486,10 +479,6 @@ if (adminKey) {
   adminPanel.hidden = false;
   adminLock.hidden = false;
   loadSubmissions();
-}
-
-if (!IS_LOCAL_API) {
-  adminShell.querySelector("p").textContent = "公开分享版仅展示内容，申请管理和成员上下架请在本地服务版操作。";
 }
 
 loadPublicContent();
