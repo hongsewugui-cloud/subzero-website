@@ -271,6 +271,42 @@
                   <span>联系信息 / 链接</span>
                   <input name="contact" type="text" maxlength="120" placeholder="微信、QQ、作品链接都可以" required />
                 </label>
+                <div class="upload-block">
+                  <div
+                    class="upload-dropzone"
+                    id="cover-dropzone"
+                    data-input="cover-file"
+                    data-preview="cover-preview"
+                    tabindex="0"
+                    role="button"
+                    aria-label="上传封面图"
+                  >
+                    <input id="cover-file" type="file" accept="image/*" hidden />
+                    <strong>拖入封面图</strong>
+                    <p>支持 JPG / PNG / WEBP。也可以点击这里选择图片。</p>
+                  </div>
+                  <div class="upload-preview" id="cover-preview">
+                    <p>还没有选择封面图。</p>
+                  </div>
+                </div>
+                <div class="upload-block">
+                  <div
+                    class="upload-dropzone"
+                    id="media-dropzone"
+                    data-input="media-file"
+                    data-preview="media-preview"
+                    tabindex="0"
+                    role="button"
+                    aria-label="上传作品文件"
+                  >
+                    <input id="media-file" type="file" accept="audio/*,image/*" hidden />
+                    <strong>拖入作品文件</strong>
+                    <p>支持 MP3 / WAV / M4A / JPG / PNG / WEBP。音乐和视觉作品都可以直接上传。</p>
+                  </div>
+                  <div class="upload-preview" id="media-preview">
+                    <p>还没有选择作品文件。</p>
+                  </div>
+                </div>
                 <button class="submit-button" type="submit">上传作品</button>
                 <p class="form-status" id="release-status" aria-live="polite"></p>
               </form>

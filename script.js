@@ -25,7 +25,7 @@ const reactiveBars = document.querySelectorAll(".audio-field i");
 const visualStage = document.querySelector("#visual-stage");
 const waveButtons = document.querySelectorAll(".wave-button");
 const interactiveControls = document.querySelectorAll(
-  "button, .round-link, .wordmark, .menu-links a, .label-intro-link, .hero-button, .contact-card, .admin-button, .submit-button, .hub-tab"
+  "button, .round-link, .wordmark, .menu-links a, .label-intro-link, .hero-button, .contact-card, .admin-button, .submit-button, .hub-tab, .upload-dropzone"
 );
 const modal = document.querySelector("#contact-modal");
 const modalOpeners = document.querySelectorAll("[data-open-modal='contact-modal']");
@@ -56,6 +56,12 @@ const releaseHistoryPagination = document.querySelector("#release-history-pagina
 const releasePrev = document.querySelector("#release-prev");
 const releaseNext = document.querySelector("#release-next");
 const releasePageStatus = document.querySelector("#release-page-status");
+const coverFileInput = document.querySelector("#cover-file");
+const mediaFileInput = document.querySelector("#media-file");
+const coverDropzone = document.querySelector("#cover-dropzone");
+const mediaDropzone = document.querySelector("#media-dropzone");
+const coverPreview = document.querySelector("#cover-preview");
+const mediaPreview = document.querySelector("#media-preview");
 const submissionList = document.querySelector("#submission-list");
 const reviewHistoryList = document.querySelector("#review-history-list");
 const reviewHistoryPagination = document.querySelector("#review-history-pagination");
@@ -75,6 +81,10 @@ let reviewHistoryPage = 0;
 const REVIEW_HISTORY_PAGE_SIZE = 4;
 let releaseHistoryPage = 0;
 const RELEASE_HISTORY_PAGE_SIZE = 4;
+const uploadState = {
+  cover: { file: null, uploaded: null, progress: 0, kind: "image" },
+  media: { file: null, uploaded: null, progress: 0, kind: "" },
+};
 
 const fallbackContent = {
   releases: [
@@ -283,14 +293,54 @@ function renderCards(target, items, renderer) {
   items.forEach((item) => target.appendChild(renderer(item)));
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function formatBytes(size) {
+  if (!Number.isFinite(size) || size <= 0) return "";
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function createReleaseMediaMarkup(item) {
+  const coverUrl = item.cover_url || "";
+  const mediaUrl = item.media_url || "";
+  const mediaKind = item.media_kind || "";
+  if (!coverUrl && !mediaUrl) return "";
+  const parts = ["<div class='release-media'>"];
+  if (coverUrl) {
+    parts.push(`<img src="${escapeHtml(coverUrl)}" alt="${escapeHtml(item.title || "作品封面")}" loading="lazy" />`);
+  }
+  if (mediaUrl && mediaKind === "audio") {
+    parts.push(`<audio controls preload="none" src="${escapeHtml(mediaUrl)}"></audio>`);
+  } else if (mediaUrl && !coverUrl) {
+    parts.push(`<img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(item.title || "作品图片")}" loading="lazy" />`);
+  }
+  if (mediaUrl) {
+    parts.push(
+      `<a class="release-link" href="${escapeHtml(mediaUrl)}" target="_blank" rel="noreferrer">` +
+        `${mediaKind === "audio" ? "打开音频文件" : "打开原图 / 原文件"}</a>`
+    );
+  }
+  parts.push("</div>");
+  return parts.join("");
+}
+
 function createItemCard(item) {
   const card = document.createElement("article");
   card.className = "item-card";
   card.innerHTML = `
-    <strong>${item.title}</strong>
-    <p>${item.summary}</p>
-    <div class="item-meta">${(item.meta || []).map((entry) => `<span>${entry}</span>`).join("")}</div>
-    ${item.contact ? `<p>${item.contact}</p>` : ""}
+    ${createReleaseMediaMarkup(item)}
+    <strong>${escapeHtml(item.title)}</strong>
+    <p>${escapeHtml(item.summary)}</p>
+    <div class="item-meta">${(item.meta || []).map((entry) => `<span>${escapeHtml(entry)}</span>`).join("")}</div>
+    ${item.contact ? `<p>${escapeHtml(item.contact)}</p>` : ""}
   `;
   return card;
 }
@@ -299,10 +349,10 @@ function createMemberCard(member) {
   const card = document.createElement("article");
   card.className = "member-card";
   card.innerHTML = `
-    <strong>${member.name}</strong>
-    <p>${member.role}</p>
-    <p>${member.bio}</p>
-    <div class="member-meta"><span>${member.contact}</span></div>
+    <strong>${escapeHtml(member.name)}</strong>
+    <p>${escapeHtml(member.role)}</p>
+    <p>${escapeHtml(member.bio)}</p>
+    <div class="member-meta"><span>${escapeHtml(member.contact)}</span></div>
   `;
   return card;
 }
@@ -370,18 +420,29 @@ applyForm.addEventListener("submit", async (event) => {
 releaseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = Object.fromEntries(new FormData(releaseForm).entries());
-  releaseStatus.textContent = "正在上传作品…";
+  if (!uploadState.cover.file && !uploadState.media.file && !uploadState.cover.uploaded && !uploadState.media.uploaded) {
+    releaseStatus.textContent = "请至少上传一张封面图，或一个作品文件。";
+    return;
+  }
+  releaseStatus.textContent = "正在上传作品文件…";
   try {
+    const [coverUpload, mediaUpload] = await Promise.all([ensureUploaded("cover"), ensureUploaded("media")]);
+    payload.cover_url = coverUpload?.secure_url || "";
+    payload.media_url = mediaUpload?.secure_url || "";
+    payload.media_kind = uploadState.media.kind || "image";
+    payload.media_name = mediaUpload?.original_filename || uploadState.media.file?.name || "";
     await fetchJson("/api/releases", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     releaseForm.reset();
-    releaseStatus.textContent = "作品已提交，正在等待管理员审核。审核通过后会自动进入音乐档案或视觉档案。";
+    clearUploadSelection("cover");
+    clearUploadSelection("media");
+    releaseStatus.textContent = "作品已上传并提交审核。审核通过后会自动进入音乐档案或视觉档案。";
     if (adminKey) await loadSubmissions();
   } catch (error) {
-    releaseStatus.textContent = HAS_API ? "上传失败，请稍后再试。" : "上传失败。当前页面还没有连接到作品服务。";
+    releaseStatus.textContent = HAS_API ? "上传失败，请检查文件后重试，或稍后再试。" : "上传失败。当前页面还没有连接到作品服务。";
   }
 });
 
@@ -399,15 +460,15 @@ function createSubmissionCard(entry) {
         : "已批准，尚未公开。"
       : "待审核。";
   card.innerHTML = `
-    <strong>${entry.name}</strong>
-    <p>${entry.focus}</p>
-    <p>${entry.bio}</p>
+    <strong>${escapeHtml(entry.name)}</strong>
+    <p>${escapeHtml(entry.focus)}</p>
+    <p>${escapeHtml(entry.bio)}</p>
     <div class="submission-meta">
-      <span>${entry.contact}</span>
-      <span>${entry.status}</span>
+      <span>${escapeHtml(entry.contact)}</span>
+      <span>${escapeHtml(entry.status)}</span>
       <span>${new Date(entry.created_at).toLocaleString("zh-CN")}</span>
     </div>
-    <p class="review-note">${reviewedText}</p>
+    <p class="review-note">${escapeHtml(reviewedText)}</p>
   `;
   const actions = document.createElement("div");
   actions.className = "submission-actions";
@@ -449,10 +510,10 @@ function createPublishedMemberCard(entry) {
   const card = document.createElement("article");
   card.className = "submission-card";
   card.innerHTML = `
-    <strong>${entry.name}</strong>
-    <p>${entry.role}</p>
-    <p>${entry.bio}</p>
-    <div class="submission-meta"><span>${entry.contact}</span></div>
+    <strong>${escapeHtml(entry.name)}</strong>
+    <p>${escapeHtml(entry.role)}</p>
+    <p>${escapeHtml(entry.bio)}</p>
+    <div class="submission-meta"><span>${escapeHtml(entry.contact)}</span></div>
   `;
   const actions = document.createElement("div");
   actions.className = "submission-actions";
@@ -465,6 +526,150 @@ function createPublishedMemberCard(entry) {
   return card;
 }
 
+function inferAssetKind(file) {
+  if (!file) return "";
+  if ((file.type || "").startsWith("audio/")) return "audio";
+  return "image";
+}
+
+function setSelectedFile(slot, file) {
+  uploadState[slot].file = file || null;
+  uploadState[slot].uploaded = null;
+  uploadState[slot].progress = 0;
+  uploadState[slot].kind = inferAssetKind(file);
+  renderUploadPreview(slot);
+}
+
+function renderUploadPreview(slot) {
+  const state = uploadState[slot];
+  const target = slot === "cover" ? coverPreview : mediaPreview;
+  const zone = slot === "cover" ? coverDropzone : mediaDropzone;
+  zone.classList.toggle("is-has-file", Boolean(state.file || state.uploaded));
+
+  if (!state.file && !state.uploaded) {
+    target.innerHTML = `<p>${slot === "cover" ? "还没有选择封面图。" : "还没有选择作品文件。"}</p>`;
+    return;
+  }
+
+  const file = state.file;
+  const uploaded = state.uploaded;
+  const previewUrl = uploaded?.secure_url || (file ? URL.createObjectURL(file) : "");
+  const mediaKind = state.kind || "image";
+  const lines = [];
+  if (previewUrl && mediaKind === "image") {
+    lines.push(`<img src="${escapeHtml(previewUrl)}" alt="上传预览" />`);
+  }
+  if (previewUrl && mediaKind === "audio") {
+    lines.push(`<audio controls preload="metadata" src="${escapeHtml(previewUrl)}"></audio>`);
+  }
+  lines.push(
+    `<div class="upload-file-meta">` +
+      `<span>${escapeHtml(uploaded?.original_filename || file?.name || "已选择文件")}</span>` +
+      `${file?.size ? `<span>${formatBytes(file.size)}</span>` : ""}` +
+      `<span>${uploaded ? "已上传" : "待上传"}</span>` +
+    `</div>`
+  );
+  lines.push(`<div class="upload-progress"><span style="--progress: ${Math.max(0, Math.min(100, state.progress))}%;"></span></div>`);
+  if (file) {
+    lines.push(`<button class="upload-action" type="button" data-clear-upload="${slot}">重新选择</button>`);
+  }
+  target.innerHTML = lines.join("");
+}
+
+function setupDropzone(zone, input, slot) {
+  const openPicker = () => input.click();
+  zone.addEventListener("click", openPicker);
+  zone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPicker();
+    }
+  });
+  input.addEventListener("change", () => setSelectedFile(slot, input.files?.[0] || null));
+  ["dragenter", "dragover"].forEach((eventName) => {
+    zone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      zone.classList.add("is-dragover");
+    });
+  });
+  ["dragleave", "dragend", "drop"].forEach((eventName) => {
+    zone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      zone.classList.remove("is-dragover");
+    });
+  });
+  zone.addEventListener("drop", (event) => {
+    const file = event.dataTransfer?.files?.[0] || null;
+    setSelectedFile(slot, file);
+  });
+}
+
+function clearUploadSelection(slot) {
+  uploadState[slot] = { file: null, uploaded: null, progress: 0, kind: slot === "cover" ? "image" : "" };
+  if (slot === "cover") coverFileInput.value = "";
+  if (slot === "media") mediaFileInput.value = "";
+  renderUploadPreview(slot);
+}
+
+async function fetchUploadSignature(file, assetKind) {
+  return fetchJson("/api/uploads/sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, asset_kind: assetKind }),
+  });
+}
+
+function uploadFileToCloudinary(file, config, onProgress) {
+  return new Promise((resolve, reject) => {
+    const endpoint = `https://api.cloudinary.com/v1_1/${config.cloud_name}/auto/upload`;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", config.api_key);
+    formData.append("timestamp", config.timestamp);
+    formData.append("signature", config.signature);
+    formData.append("folder", config.folder);
+    formData.append("public_id", config.public_id);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+    xhr.upload.addEventListener("progress", (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(Math.round((event.loaded / event.total) * 100));
+    });
+    xhr.onload = () => {
+      try {
+        const payload = JSON.parse(xhr.responseText || "{}");
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new Error(payload.error?.message || "upload failed"));
+          return;
+        }
+        resolve(payload);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    xhr.onerror = () => reject(new Error("network error"));
+    xhr.send(formData);
+  });
+}
+
+async function ensureUploaded(slot) {
+  const state = uploadState[slot];
+  if (state.uploaded) return state.uploaded;
+  if (!state.file) return null;
+  const assetKind = slot === "cover" ? "image" : inferAssetKind(state.file);
+  const config = await fetchUploadSignature(state.file, assetKind);
+  const uploaded = await uploadFileToCloudinary(state.file, config, (progress) => {
+    state.progress = progress;
+    renderUploadPreview(slot);
+  });
+  state.progress = 100;
+  state.uploaded = uploaded;
+  state.kind = assetKind;
+  renderUploadPreview(slot);
+  return uploaded;
+}
+
 function createReleaseSubmissionCard(entry) {
   const card = document.createElement("article");
   card.className = "submission-card";
@@ -472,16 +677,17 @@ function createReleaseSubmissionCard(entry) {
   const category = entry.meta?.[1] || "未分类";
   const statusText = entry.status === "approved" ? "已公开到作品档案。" : entry.status === "rejected" ? "已拒绝，不会进入公开作品区。" : "待审核。";
   card.innerHTML = `
-    <strong>${entry.title}</strong>
-    <p>${entry.summary}</p>
+    ${createReleaseMediaMarkup(entry)}
+    <strong>${escapeHtml(entry.title)}</strong>
+    <p>${escapeHtml(entry.summary)}</p>
     <div class="submission-meta">
-      <span>${creator}</span>
-      <span>${category}</span>
-      <span>${entry.section === "music" ? "音乐档案" : "视觉档案"}</span>
-      <span>${entry.status || "pending"}</span>
+      <span>${escapeHtml(creator)}</span>
+      <span>${escapeHtml(category)}</span>
+      <span>${escapeHtml(entry.section === "music" ? "音乐档案" : "视觉档案")}</span>
+      <span>${escapeHtml(entry.status || "pending")}</span>
     </div>
-    <p>${entry.contact}</p>
-    <p class="review-note">${statusText}</p>
+    <p>${escapeHtml(entry.contact)}</p>
+    <p class="review-note">${escapeHtml(statusText)}</p>
   `;
   const actions = document.createElement("div");
   actions.className = "submission-actions";
@@ -515,6 +721,17 @@ function createReleaseSubmissionCard(entry) {
   card.appendChild(actions);
   return card;
 }
+
+setupDropzone(coverDropzone, coverFileInput, "cover");
+setupDropzone(mediaDropzone, mediaFileInput, "media");
+renderUploadPreview("cover");
+renderUploadPreview("media");
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-clear-upload]");
+  if (!trigger) return;
+  clearUploadSelection(trigger.dataset.clearUpload);
+});
 
 async function loadSubmissions() {
   if (!adminKey) return;

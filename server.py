@@ -1,5 +1,6 @@
 import argparse
 import copy
+import hashlib
 import json
 import os
 import threading
@@ -27,6 +28,9 @@ RELEASES_FILE = DATA_DIR / "releases.json"
 DATA_LOCK = threading.Lock()
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ADMIN_KEY = os.getenv("SUBZERO_ADMIN_KEY", "subzero-local-admin")
+UPLOAD_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+UPLOAD_API_KEY = os.getenv("CLOUDINARY_API_KEY", "").strip()
+UPLOAD_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "").strip()
 CONTACT_MEMBER_ID = "contact-window"
 
 
@@ -103,6 +107,35 @@ def infer_release_section(category: str) -> str:
     return "music" if any(token in lowered for token in music_tokens) else "visual"
 
 
+def is_upload_ready() -> bool:
+    return all([UPLOAD_CLOUD_NAME, UPLOAD_API_KEY, UPLOAD_API_SECRET])
+
+
+def make_upload_signature(params: dict[str, str]) -> str:
+    payload = "&".join(f"{key}={params[key]}" for key in sorted(params))
+    return hashlib.sha1(f"{payload}{UPLOAD_API_SECRET}".encode("utf-8")).hexdigest()
+
+
+def build_upload_signature(filename: str, asset_kind: str) -> dict[str, str]:
+    now = int(datetime.now(timezone.utc).timestamp())
+    safe_name = Path(filename or "asset").stem[:48] or "asset"
+    public_id = f"{safe_name}-{uuid.uuid4().hex[:8]}"
+    folder = f"subzero/{'audio' if asset_kind == 'audio' else 'images'}"
+    params = {
+        "folder": folder,
+        "public_id": public_id,
+        "timestamp": str(now),
+    }
+    return {
+        "cloud_name": UPLOAD_CLOUD_NAME,
+        "api_key": UPLOAD_API_KEY,
+        "folder": folder,
+        "public_id": public_id,
+        "timestamp": str(now),
+        "signature": make_upload_signature(params),
+    }
+
+
 class JsonStorage:
     def ensure(self) -> None:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -163,7 +196,7 @@ class JsonStorage:
             save_json(SUBMISSIONS_FILE, submissions)
         return entry
 
-    def create_release(self, title, creator, category, summary, contact):
+    def create_release(self, title, creator, category, summary, contact, cover_url="", media_url="", media_kind="", media_name=""):
         entry = {
             "id": uuid.uuid4().hex[:10],
             "title": title,
@@ -171,6 +204,10 @@ class JsonStorage:
             "meta": [creator, category, "成员投稿"],
             "section": infer_release_section(category),
             "contact": contact,
+            "cover_url": cover_url,
+            "media_url": media_url,
+            "media_kind": media_kind,
+            "media_name": media_name,
             "created_at": utc_now(),
             "status": "pending",
             "reviewed_at": None,
@@ -293,6 +330,10 @@ class PostgresStorage:
                         meta text not null,
                         section text not null default 'visual',
                         contact text not null,
+                        cover_url text,
+                        media_url text,
+                        media_kind text,
+                        media_name text,
                         created_at text not null,
                         status text not null default 'pending',
                         reviewed_at text,
@@ -304,6 +345,10 @@ class PostgresStorage:
                 cursor.execute("alter table releases add column if not exists status text not null default 'pending'")
                 cursor.execute("alter table releases add column if not exists reviewed_at text")
                 cursor.execute("alter table releases add column if not exists published_at text")
+                cursor.execute("alter table releases add column if not exists cover_url text")
+                cursor.execute("alter table releases add column if not exists media_url text")
+                cursor.execute("alter table releases add column if not exists media_kind text")
+                cursor.execute("alter table releases add column if not exists media_name text")
             conn.commit()
 
     def public_content(self):
@@ -313,7 +358,7 @@ class PostgresStorage:
         with self._connect() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
                 cursor.execute(
-                    "select id, title, summary, meta, section, contact, created_at, status, reviewed_at, published_at "
+                    "select id, title, summary, meta, section, contact, cover_url, media_url, media_kind, media_name, created_at, status, reviewed_at, published_at "
                     "from releases order by created_at desc"
                 )
                 rows = [dict(row) for row in cursor.fetchall()]
@@ -372,7 +417,7 @@ class PostgresStorage:
             conn.commit()
         return entry
 
-    def create_release(self, title, creator, category, summary, contact):
+    def create_release(self, title, creator, category, summary, contact, cover_url="", media_url="", media_kind="", media_name=""):
         entry = {
             "id": uuid.uuid4().hex[:10],
             "title": title,
@@ -380,6 +425,10 @@ class PostgresStorage:
             "meta": [creator, category, "成员投稿"],
             "section": infer_release_section(category),
             "contact": contact,
+            "cover_url": cover_url,
+            "media_url": media_url,
+            "media_kind": media_kind,
+            "media_name": media_name,
             "created_at": utc_now(),
             "status": "pending",
             "reviewed_at": None,
@@ -389,8 +438,8 @@ class PostgresStorage:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    insert into releases (id, title, summary, meta, section, contact, created_at, status, reviewed_at, published_at)
-                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    insert into releases (id, title, summary, meta, section, contact, cover_url, media_url, media_kind, media_name, created_at, status, reviewed_at, published_at)
+                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         entry["id"],
@@ -399,6 +448,10 @@ class PostgresStorage:
                         json.dumps(entry["meta"], ensure_ascii=False),
                         entry["section"],
                         entry["contact"],
+                        entry["cover_url"],
+                        entry["media_url"],
+                        entry["media_kind"],
+                        entry["media_name"],
                         entry["created_at"],
                         entry["status"],
                         entry["reviewed_at"],
@@ -552,6 +605,9 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/applications":
             self._handle_application()
             return
+        if parsed.path == "/api/uploads/sign":
+            self._handle_upload_signature()
+            return
         if parsed.path == "/api/releases":
             self._handle_release_submit()
             return
@@ -575,6 +631,20 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
             return
         self._send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
+    def _handle_upload_signature(self):
+        if not is_upload_ready():
+            self._send_json({"error": "upload service not configured"}, HTTPStatus.SERVICE_UNAVAILABLE)
+            return
+        payload = self._read_json()
+        filename = str(payload.get("filename", "")).strip()
+        asset_kind = str(payload.get("asset_kind", "image")).strip().lower()
+        if asset_kind not in {"image", "audio"}:
+            asset_kind = "image"
+        if not filename:
+            self._send_json({"error": "missing filename"}, HTTPStatus.BAD_REQUEST)
+            return
+        self._send_json({"ok": True, **build_upload_signature(filename, asset_kind)})
+
     def _handle_application(self):
         payload = self._read_json()
         name = str(payload.get("name", "")).strip()
@@ -594,10 +664,17 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
         category = str(payload.get("category", "")).strip()
         summary = str(payload.get("summary", "")).strip()
         contact = str(payload.get("contact", "")).strip()
+        cover_url = str(payload.get("cover_url", "")).strip()
+        media_url = str(payload.get("media_url", "")).strip()
+        media_kind = str(payload.get("media_kind", "")).strip()
+        media_name = str(payload.get("media_name", "")).strip()
         if not all([title, creator, category, summary, contact]):
             self._send_json({"error": "missing fields"}, HTTPStatus.BAD_REQUEST)
             return
-        entry = STORAGE.create_release(title, creator, category, summary, contact)
+        if not cover_url and not media_url:
+            self._send_json({"error": "missing uploaded media"}, HTTPStatus.BAD_REQUEST)
+            return
+        entry = STORAGE.create_release(title, creator, category, summary, contact, cover_url, media_url, media_kind, media_name)
         self._send_json({"ok": True, "id": entry["id"]}, HTTPStatus.CREATED)
 
     def _handle_release_review(self):
