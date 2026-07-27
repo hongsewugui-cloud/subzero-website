@@ -17,4 +17,3 @@ services:
   - type: pserv
     name: subzero-db
     plan: free
-    postgresMajorVersion: "16"
