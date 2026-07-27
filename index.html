@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SUBZERO 是一个探索音乐与视觉艺术融合的独立创意厂牌，支持作品发布、成员申请、资料归档与新人交流。"
+    />
+    <title>SUBZERO / Creative Label</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="intro-active">
+    <div class="comic-backdrop" aria-hidden="true"></div>
+    <div class="site-grain" aria-hidden="true"></div>
+    <audio id="background-music" src="assets/basement-boombap-circus.mp3" preload="auto" loop></audio>
+
+    <section class="intro" id="intro" aria-label="SUBZERO 开场动画">
+      <div class="intro-topline">
+        <span>SUBZERO / CREATIVE LABEL</span>
+        <button class="text-button" id="skip-intro" type="button">跳过</button>
+      </div>
+      <div class="letter-stage" aria-label="SUBZERO">
+        <span class="launch-letter s">S</span>
+        <span class="launch-letter u">U</span>
+        <span class="launch-letter b">B</span>
+        <span class="launch-letter z">Z</span>
+        <span class="launch-letter e">E</span>
+        <span class="launch-letter r">R</span>
+        <span class="launch-letter o">O</span>
+      </div>
+      <div class="intro-impact" aria-hidden="true"><span>!</span></div>
+      <p class="intro-status">SOUND / IMAGE / EMOTION / LEARN TOGETHER</p>
+    </section>
+
+    <div class="menu-panel" id="menu-panel" aria-hidden="true">
+      <button class="menu-close" id="menu-close" type="button" aria-label="关闭菜单">×</button>
+      <nav class="menu-links" aria-label="站点导航">
+        <a href="#about"><span>01</span> 简介</a>
+        <a href="#sound"><span>02</span> 音乐</a>
+        <a href="#art"><span>03</span> 视觉</a>
+        <a href="#project"><span>04</span> 项目</a>
+        <a href="#community"><span>05</span> 社群</a>
+        <a href="#contact"><span>06</span> 联系</a>
+      </nav>
+      <p>MUSIC / VISUAL ART / COMMUNITY / ARCHIVE</p>
+    </div>
+
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="SUBZERO 首页">SUBZERO</a>
+      <div class="header-module">
+        <span class="module-mark">S/Z</span>
+        <span class="module-pulse" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <button class="music-toggle" id="music-toggle" type="button" aria-pressed="false">MUSIC OFF</button>
+        <button class="menu-trigger" id="menu-trigger" type="button">MENU</button>
+      </div>
+      <span class="header-location">WECHAT / QQ / DOUYIN</span>
+    </header>
+
+    <main id="top">
+      <section class="hero section-shell" aria-label="SUBZERO 厂牌主页">
+        <div class="hero-side hero-side-right">INDEPENDENT CREATIVE LABEL</div>
+        <div class="hero-identity">
+          <div class="hero-showcase">
+            <div class="poster-stage hero-maincard">
+              <div class="poster-card">
+                <img class="hero-logo" src="assets/subzero-wordmark-v2.svg" alt="SUBZERO 新 logo 海报版" />
+                <p>SEE THE SOUND / HEAR THE IMAGE / LEARN TOGETHER</p>
+              </div>
+            </div>
+            <div class="hero-logo-frame hero-sidecard wave-bass" id="visual-stage">
+              <div class="vinyl-disc" aria-label="旋转中的 SUBZERO 唱片">
+                <span class="vinyl-groove groove-one" aria-hidden="true"></span>
+                <span class="vinyl-groove groove-two" aria-hidden="true"></span>
+                <span class="vinyl-groove groove-three" aria-hidden="true"></span>
+                <div class="vinyl-label">
+                  <img class="vinyl-logo" src="assets/subzero-wordmark-v2.svg" alt="SUBZERO 新 logo" />
+                </div>
+              </div>
+              <div class="wave-ripples" aria-hidden="true"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="audio-word" aria-hidden="true">
+            <span>S</span><span>U</span><span>B</span><span>Z</span><span>E</span><span>R</span><span>O</span>
+          </div>
+          <div class="audio-field" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="hero-actions">
+            <button class="hero-button" type="button" data-open-modal="contact-modal">查看联系方式</button>
+            <a class="hero-button is-secondary" href="#community">加入交流</a>
+          </div>
+          <div class="wave-controls" aria-label="声压效果控制">
+            <button type="button" class="wave-button" data-wave="bass" aria-label="触发低频波浪">01 / BASS</button>
+            <button type="button" class="wave-button" data-wave="kick" aria-label="触发重击波浪">02 / KICK</button>
+            <button type="button" class="wave-button" data-wave="noise" aria-label="触发噪点波浪">03 / NOISE</button>
+          </div>
+        </div>
+        <div class="hero-bottom">
+          <p>MUSIC / VISUAL ART / OPEN COMMUNITY</p>
+          <a class="round-link" href="#about" aria-label="查看厂牌介绍">↓</a>
+          <p>NO RULES. NEW EXPERIMENTS.</p>
+        </div>
+      </section>
+
+      <section class="label-intro section-shell" aria-label="SUBZERO 厂牌介绍">
+        <div class="section-index">SUBZERO / CREATIVE LABEL</div>
+        <div class="label-intro-title reveal">
+          <p>MUSIC AND VISUAL ART FUSION.</p>
+          <h2>新的实验</h2>
+        </div>
+        <div class="label-intro-info reveal">
+          <p>SUBZERO 是一个探索音乐与视觉艺术融合的独立创意厂牌。</p>
+          <p>我们关注年轻创作者的表达方式，将声音、图像与情绪结合，创造具有独特视觉语言的作品。</p>
+          <div class="label-facts">
+            <span>INDEPENDENT LABEL</span>
+            <span>SOUND / IMAGE</span>
+            <span>YOUNG CREATORS</span>
+            <span>EXPERIMENTAL OUTPUT</span>
+          </div>
+          <div class="label-actions">
+            <a class="label-intro-link" href="#community">进入社群入口 <span>↓</span></a>
+            <button class="label-intro-link is-dark" type="button" data-open-modal="contact-modal">
+              查看联系方式 <span>↗</span>
+            </button>
+          </div>
+        </div>
+        <p class="label-intro-edge" aria-hidden="true">NO FIXED RULES / EACH WORK IS A NEW EXPERIMENT</p>
+      </section>
+
+      <section class="manifesto section-shell" id="about">
+        <div class="section-index">01 / 简介</div>
+        <div class="manifesto-copy reveal">
+          <p class="manifesto-lead">这里没有固定的规则。</p>
+          <p>每一次创作，都是一次新的实验。</p>
+          <p>我们都是新人，大家可以一起交流学习，一起把声音、图像和情绪变成真正能发布的作品。</p>
+        </div>
+        <div class="manifesto-stamp reveal">
+          <span>SUBZERO</span>
+          <span>MUSIC + VISUAL ART</span>
+          <span>OPEN COMMUNITY / 2026</span>
+        </div>
+      </section>
+
+      <section class="sound section-shell" id="sound">
+        <div class="section-index">02 / 音乐档案</div>
+        <div class="sound-grid">
+          <h1 class="sound-title reveal">音乐档案<br />声音入场</h1>
+          <div class="sound-notes reveal">
+            <p>声音是情绪的另一种形式。SUBZERO 收录独立音乐作品，通过音乐与视觉的结合，构建完整的艺术体验。</p>
+            <dl>
+              <div><dt>01</dt><dd>艺术家</dd></div>
+              <div><dt>02</dt><dd>专辑</dd></div>
+              <div><dt>03</dt><dd>单曲</dd></div>
+              <div><dt>04</dt><dd>发行作品</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="art section-shell" id="art">
+        <div class="section-index">03 / 视觉档案</div>
+        <div class="art-copy reveal">
+          <p class="art-title">视觉档案<br />图像发声</p>
+          <p>每一幅图像，都是一种声音。我们探索插画、数字艺术、概念设计与视觉叙事之间的联系。</p>
+          <p>视觉输出不只是配图，而是和音乐并行生长的内容系统，用图像延展情绪、世界观与叙述方式。</p>
+        </div>
+        <div class="art-board reveal">
+          <img src="assets/subzero-wordmark-v2.svg" alt="SUBZERO 新 logo 展示板" />
+        </div>
+      </section>
+
+      <section class="project section-shell" id="project">
+        <div class="section-index">04 / 最新项目</div>
+        <div class="project-layout">
+          <div class="project-copy reveal">
+            <p>PROJECT SHOWCASE</p>
+            <h2>冰层之下</h2>
+            <p>关于孤独、记忆与数字时代情绪的视觉探索。</p>
+            <p>通过音乐、插画与设计，构建一个属于 SUBZERO 的虚拟世界。</p>
+          </div>
+          <div class="project-card reveal">
+            <span>PROJECT 01</span>
+            <strong>VISUAL EXPLORATION</strong>
+            <p>音乐、插画、海报设计和概念设定并行推进，形成完整项目档案。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="community section-shell" id="community">
+        <div class="section-index">05 / 社群入口</div>
+        <div class="community-layout">
+          <div class="hub-shell reveal">
+            <div class="hub-heading">
+              <p>把成员信息、作品整理和申请入口都放在这里。</p>
+              <h2>一起发布<br />一起学习</h2>
+            </div>
+            <div class="hub-tabs" role="tablist" aria-label="社群功能">
+              <button class="hub-tab is-active" type="button" role="tab" aria-selected="true" data-panel="members">
+                <span>01</span> 作品发布
+              </button>
+              <button class="hub-tab" type="button" role="tab" aria-selected="false" data-panel="releases">
+                <span>02</span> 作品发布
+              </button>
+              <button class="hub-tab" type="button" role="tab" aria-selected="false" data-panel="events">
+                <span>03</span> 现场记录
+              </button>
+              <button class="hub-tab" type="button" role="tab" aria-selected="false" data-panel="archives">
+                <span>04</span> 资料归档
+              </button>
+            </div>
+
+            <div class="hub-panel is-active" id="panel-members" role="tabpanel">
+              <p class="panel-intro">我们都是新人，大家可以一起交流学习。提交申请后，由主理人在后台审核，再决定是否公开到网站。</p>
+              <div class="member-grid" id="member-list"></div>
+              <form class="apply-form" id="member-apply-form">
+                <h3>提交成员申请</h3>
+                <label>
+                  <span>名字或称呼</span>
+                  <input name="name" type="text" maxlength="40" required />
+                </label>
+                <label>
+                  <span>方向</span>
+                  <select name="focus" id="focus-select" required>
+                    <option value="">请选择一个方向</option>
+                    <option value="说唱 / 音乐">说唱 / 音乐</option>
+                    <option value="插画 / 视觉">插画 / 视觉</option>
+                    <option value="海报 / 平面">海报 / 平面</option>
+                    <option value="摄影 / 影像">摄影 / 影像</option>
+                    <option value="DJ / 制作">DJ / 制作</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </label>
+                <label id="focus-other-wrap" hidden>
+                  <span>其他方向</span>
+                  <input name="focus_other" id="focus-other-input" type="text" maxlength="40" placeholder="填写你的方向" />
+                </label>
+                <label>
+                  <span>联系方式</span>
+                  <input name="contact" type="text" maxlength="80" placeholder="微信 / QQ / 邮箱都可以" required />
+                </label>
+                <label>
+                  <span>自我介绍</span>
+                  <textarea name="bio" rows="4" maxlength="280" placeholder="写一下你现在在做什么、想一起做什么" required></textarea>
+                </label>
+                <button class="submit-button" type="submit">提交申请</button>
+                <p class="form-status" id="apply-status" aria-live="polite"></p>
+              </form>
+            </div>
+
+            <div class="hub-panel" id="panel-releases" role="tabpanel" hidden>
+              <p class="panel-intro">用于整理公开作品、系列计划和发布状态。</p>
+              <div class="item-list" id="release-list"></div>
+            </div>
+
+            <div class="hub-panel" id="panel-events" role="tabpanel" hidden>
+              <p class="panel-intro">用于记录演出、线下碰头、拍摄和正在发生的现场行动。</p>
+              <div class="item-list" id="event-list"></div>
+            </div>
+
+            <div class="hub-panel" id="panel-archives" role="tabpanel" hidden>
+              <p class="panel-intro">用于归档参考资料、学习线索、视觉板和阶段记录。</p>
+              <div class="item-list" id="archive-list"></div>
+            </div>
+          </div>
+
+          <aside class="admin-shell reveal">
+            <p class="admin-kicker">ONLY YOU CAN REVIEW</p>
+            <h3>申请管理台</h3>
+            <p>公开页不会显示待审核申请。只有知道管理员口令的人，才能查看、批准或公开成员信息。</p>
+            <div class="admin-actions">
+              <button class="admin-button" id="admin-access" type="button">打开管理台</button>
+              <button class="admin-button is-light" id="admin-lock" type="button" hidden>关闭管理台</button>
+            </div>
+            <div class="admin-panel" id="admin-panel" hidden>
+              <p class="admin-status" id="admin-status">正在读取申请列表…</p>
+              <div class="submission-list" id="submission-list"></div>
+              <div class="member-admin-block">
+                <p class="panel-intro">已公开成员</p>
+                <div class="submission-list" id="published-member-list"></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="contact section-shell" id="contact">
+        <div class="section-index">06 / 联系</div>
+        <div class="contact-body reveal">
+          <p class="contact-kicker">CONTACT</p>
+          <div class="contact-main">CH_576</div>
+          <button class="contact-card" type="button" data-open-modal="contact-modal">
+            <span>WECHAT</span>
+            <strong>CH_576 ↗</strong>
+          </button>
+          <p class="contact-close">联系方式和成员信息会持续更新。</p>
+          <div class="contact-actions">
+            <button class="replay-button" id="replay-intro" type="button">重放标志动画 <span>↗</span></button>
+            <button class="replay-button is-light" type="button" data-open-modal="contact-modal">查看全部联系方式 <span>↗</span></button>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <span>SUBZERO / CREATIVE LABEL</span>
+          <span>WECHAT · QQ · DOUYIN</span>
+          <span>NO RULES · NEW EXPERIMENTS</span>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal" id="contact-modal" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+        <button class="modal-close" type="button" data-close-modal aria-label="关闭弹窗">×</button>
+        <p class="modal-kicker">CONTACT WINDOW</p>
+        <h3 id="contact-modal-title">查看联系方式</h3>
+        <div class="contact-list">
+          <div><span>微信</span><strong>CH_576</strong></div>
+          <div><span>QQ</span><strong>1877526586</strong></div>
+          <div><span>抖音</span><strong>2022.12.06....</strong></div>
+          <div><span>邮箱</span><strong>hongsewugui@gmail.com</strong></div>
+        </div>
+        <p class="modal-note">如果要加入成员合作，直接在社群入口提交申请；审核通过后再公开展示到网站。</p>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

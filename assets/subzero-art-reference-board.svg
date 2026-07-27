@@ -1,0 +1,48 @@
+<svg width="900" height="640" viewBox="0 0 900 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#101010"/>
+    </pattern>
+    <pattern id="scan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M0 1H8" stroke="#101010" stroke-width="1" opacity=".22"/>
+    </pattern>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="3" seed="12"/>
+      <feDisplacementMap in="SourceGraphic" scale="1.4"/>
+    </filter>
+  </defs>
+  <rect width="900" height="640" fill="#F1EFE8"/>
+  <rect width="900" height="640" fill="url(#dots)" opacity=".18"/>
+  <rect x="22" y="22" width="856" height="596" stroke="#101010" stroke-width="10"/>
+  <path d="M42 96H858" stroke="#101010" stroke-width="8"/>
+  <path d="M42 548H858" stroke="#101010" stroke-width="8"/>
+  <text x="48" y="72" fill="#101010" font-family="Impact, Arial Black, sans-serif" font-size="42">SUBZERO VISUAL ART</text>
+  <text x="658" y="74" fill="#E12822" font-family="Arial Black, Arial, sans-serif" font-size="18">MUSIC + ART STUDIO</text>
+
+  <g filter="url(#rough)">
+    <rect x="62" y="128" width="250" height="360" fill="#101010"/>
+    <path d="M90 180C126 130 216 128 276 174L244 218C212 192 162 190 134 222C106 254 120 306 162 325C194 339 240 336 274 309L294 361C234 414 130 408 86 344C48 288 54 232 90 180Z" fill="#F1EFE8"/>
+    <path d="M128 418L270 160" stroke="#FFD325" stroke-width="18"/>
+    <path d="M148 420L284 206" stroke="#E12822" stroke-width="12"/>
+    <text x="82" y="524" fill="#101010" font-family="Arial Black, Arial, sans-serif" font-size="22">ILLUSTRATION</text>
+  </g>
+
+  <g>
+    <rect x="350" y="128" width="208" height="162" fill="#FFD325" stroke="#101010" stroke-width="7"/>
+    <path d="M376 170H532M376 206H500M376 242H522" stroke="#101010" stroke-width="10"/>
+    <text x="372" y="326" fill="#101010" font-family="Impact, Arial Black, sans-serif" font-size="64">POSTER</text>
+    <rect x="350" y="348" width="208" height="140" fill="#E12822" stroke="#101010" stroke-width="7"/>
+    <path d="M384 392L448 372L522 420L472 456L414 432L382 454" stroke="#F1EFE8" stroke-width="12" stroke-linejoin="bevel"/>
+  </g>
+
+  <g>
+    <rect x="602" y="128" width="224" height="360" fill="#F1EFE8" stroke="#101010" stroke-width="7"/>
+    <rect x="632" y="160" width="164" height="226" fill="url(#scan)" stroke="#101010" stroke-width="5"/>
+    <path d="M658 226C692 184 752 196 774 250C744 238 712 244 692 276C674 304 654 318 632 306C642 280 638 250 658 226Z" fill="#E12822" stroke="#101010" stroke-width="5"/>
+    <path d="M646 430H786M646 456H748" stroke="#101010" stroke-width="9"/>
+    <text x="638" y="524" fill="#101010" font-family="Arial Black, Arial, sans-serif" font-size="22">ZINE / PRINT</text>
+  </g>
+
+  <text x="48" y="586" fill="#101010" font-family="Arial Black, Arial, sans-serif" font-size="18">DRAWING / COVER / TYPE EXPERIMENT / PRINT OBJECT</text>
+  <text x="704" y="586" fill="#E12822" font-family="Arial Black, Arial, sans-serif" font-size="18">NO VIRTUAL IDOL</text>
+</svg>
