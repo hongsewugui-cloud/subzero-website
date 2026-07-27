@@ -49,6 +49,11 @@ const adminLock = document.querySelector("#admin-lock");
 const adminPanel = document.querySelector("#admin-panel");
 const adminStatus = document.querySelector("#admin-status");
 const submissionList = document.querySelector("#submission-list");
+const reviewHistoryList = document.querySelector("#review-history-list");
+const reviewHistoryPagination = document.querySelector("#review-history-pagination");
+const reviewPrev = document.querySelector("#review-prev");
+const reviewNext = document.querySelector("#review-next");
+const reviewPageStatus = document.querySelector("#review-page-status");
 const publishedMemberList = document.querySelector("#published-member-list");
 const adminShell = document.querySelector(".admin-shell");
 const motionReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -58,6 +63,8 @@ let introHideTimer;
 let waveResetTimer;
 let musicEnabled = false;
 let adminKey = sessionStorage.getItem("subzero-admin-key") || "";
+let reviewHistoryPage = 0;
+const REVIEW_HISTORY_PAGE_SIZE = 4;
 
 const fallbackContent = {
   releases: [
@@ -448,11 +455,30 @@ async function loadSubmissions() {
     const payload = await fetchJson("/api/admin/submissions", {
       headers: { "X-Admin-Key": adminKey },
     });
+    const pendingSubmissions = payload.submissions.filter((entry) => entry.status === "pending");
+    const reviewHistory = payload.submissions.filter((entry) => entry.status !== "pending");
     submissionList.innerHTML = "";
-    if (!payload.submissions.length) {
+    if (!pendingSubmissions.length) {
       submissionList.innerHTML = "<div class='submission-card'><strong>暂无申请</strong><p>等有人提交后，这里会显示待审核内容。</p></div>";
     } else {
-      payload.submissions.forEach((entry) => submissionList.appendChild(createSubmissionCard(entry)));
+      pendingSubmissions.forEach((entry) => submissionList.appendChild(createSubmissionCard(entry)));
+    }
+    reviewHistoryList.innerHTML = "";
+    const totalPages = Math.max(1, Math.ceil(reviewHistory.length / REVIEW_HISTORY_PAGE_SIZE));
+    reviewHistoryPage = Math.min(reviewHistoryPage, totalPages - 1);
+    const pageItems = reviewHistory.slice(
+      reviewHistoryPage * REVIEW_HISTORY_PAGE_SIZE,
+      reviewHistoryPage * REVIEW_HISTORY_PAGE_SIZE + REVIEW_HISTORY_PAGE_SIZE
+    );
+    if (!reviewHistory.length) {
+      reviewHistoryList.innerHTML = "<div class='submission-card'><strong>暂无审核记录</strong><p>批准、拒绝或下架后的记录会翻页显示在这里。</p></div>";
+      reviewHistoryPagination.hidden = true;
+    } else {
+      pageItems.forEach((entry) => reviewHistoryList.appendChild(createSubmissionCard(entry)));
+      reviewHistoryPagination.hidden = false;
+      reviewPrev.disabled = reviewHistoryPage === 0;
+      reviewNext.disabled = reviewHistoryPage >= totalPages - 1;
+      reviewPageStatus.textContent = `第 ${reviewHistoryPage + 1} 页 / 共 ${totalPages} 页`;
     }
     publishedMemberList.innerHTML = "";
     if (!payload.published_members.length) {
@@ -484,6 +510,17 @@ async function reviewSubmission(id, decision, publish) {
     adminStatus.textContent = "操作失败，请确认本地服务和管理员口令是否正确。";
   }
 }
+
+reviewPrev.addEventListener("click", async () => {
+  if (reviewHistoryPage === 0) return;
+  reviewHistoryPage -= 1;
+  await loadSubmissions();
+});
+
+reviewNext.addEventListener("click", async () => {
+  reviewHistoryPage += 1;
+  await loadSubmissions();
+});
 
 async function removePublishedMember(id) {
   try {
