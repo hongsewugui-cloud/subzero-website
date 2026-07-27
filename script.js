@@ -34,6 +34,8 @@ const tabButtons = document.querySelectorAll(".hub-tab");
 const tabPanels = document.querySelectorAll(".hub-panel");
 const applyForm = document.querySelector("#member-apply-form");
 const applyStatus = document.querySelector("#apply-status");
+const releaseForm = document.querySelector("#release-submit-form");
+const releaseStatus = document.querySelector("#release-status");
 const focusSelect = document.querySelector("#focus-select");
 const focusOtherWrap = document.querySelector("#focus-other-wrap");
 const focusOtherInput = document.querySelector("#focus-other-input");
@@ -41,6 +43,7 @@ const releaseList = document.querySelector("#release-list");
 const memberList = document.querySelector("#member-list");
 const eventList = document.querySelector("#event-list");
 const archiveList = document.querySelector("#archive-list");
+const archiveMemberList = document.querySelector("#archive-member-list");
 const adminAccess = document.querySelector("#admin-access");
 const adminLock = document.querySelector("#admin-lock");
 const adminPanel = document.querySelector("#admin-panel");
@@ -268,6 +271,7 @@ function createItemCard(item) {
     <strong>${item.title}</strong>
     <p>${item.summary}</p>
     <div class="item-meta">${(item.meta || []).map((entry) => `<span>${entry}</span>`).join("")}</div>
+    ${item.contact ? `<p>${item.contact}</p>` : ""}
   `;
   return card;
 }
@@ -289,6 +293,7 @@ function renderContent(content) {
   renderCards(memberList, content.members || [], createMemberCard);
   renderCards(eventList, content.events || [], createItemCard);
   renderCards(archiveList, content.archives || [], createItemCard);
+  renderCards(archiveMemberList, content.members || [], createMemberCard);
 }
 
 function syncFocusOther() {
@@ -335,6 +340,24 @@ applyForm.addEventListener("submit", async (event) => {
     applyStatus.textContent = "申请已提交。现在只有主理人能在管理台看见，审核通过后才会公开到网站。";
   } catch (error) {
     applyStatus.textContent = HAS_API ? "提交失败。请稍后重试，或直接联系主理人微信 CH_576。" : "提交失败。当前页面还没有连接到申请服务。";
+  }
+});
+
+releaseForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(releaseForm).entries());
+  releaseStatus.textContent = "正在上传作品…";
+  try {
+    await fetchJson("/api/releases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    releaseForm.reset();
+    releaseStatus.textContent = "作品已提交，作品发布页已更新。";
+    await loadPublicContent();
+  } catch (error) {
+    releaseStatus.textContent = HAS_API ? "上传失败，请稍后再试。" : "上传失败。当前页面还没有连接到作品服务。";
   }
 });
 

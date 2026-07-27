@@ -197,7 +197,7 @@
             </div>
             <div class="hub-tabs" role="tablist" aria-label="社群功能">
               <button class="hub-tab is-active" type="button" role="tab" aria-selected="true" data-panel="members">
-                <span>01</span> 作品发布
+                <span>01</span> 成员合作
               </button>
               <button class="hub-tab" type="button" role="tab" aria-selected="false" data-panel="releases">
                 <span>02</span> 作品发布
@@ -249,7 +249,41 @@
             </div>
 
             <div class="hub-panel" id="panel-releases" role="tabpanel" hidden>
-              <p class="panel-intro">用于整理公开作品、系列计划和发布状态。</p>
+              <p class="panel-intro">成员可以在这里提交作品信息，发布后会直接展示在这一区域。</p>
+              <form class="apply-form" id="release-submit-form">
+                <h3>提交作品发布</h3>
+                <label>
+                  <span>作品标题</span>
+                  <input name="title" type="text" maxlength="60" required />
+                </label>
+                <label>
+                  <span>作者 / 成员称呼</span>
+                  <input name="creator" type="text" maxlength="40" required />
+                </label>
+                <label>
+                  <span>作品类型</span>
+                  <select name="category" required>
+                    <option value="">请选择类型</option>
+                    <option value="单曲 / 音乐">单曲 / 音乐</option>
+                    <option value="专辑视觉">专辑视觉</option>
+                    <option value="插画 / 视觉">插画 / 视觉</option>
+                    <option value="海报 / 平面">海报 / 平面</option>
+                    <option value="摄影 / 影像">摄影 / 影像</option>
+                    <option value="概念设定">概念设定</option>
+                    <option value="其他作品">其他作品</option>
+                  </select>
+                </label>
+                <label>
+                  <span>作品简介</span>
+                  <textarea name="summary" rows="4" maxlength="280" placeholder="写一下作品内容、风格或想表达的东西" required></textarea>
+                </label>
+                <label>
+                  <span>联系信息 / 链接</span>
+                  <input name="contact" type="text" maxlength="120" placeholder="微信、QQ、作品链接都可以" required />
+                </label>
+                <button class="submit-button" type="submit">上传作品</button>
+                <p class="form-status" id="release-status" aria-live="polite"></p>
+              </form>
               <div class="item-list" id="release-list"></div>
             </div>
 
@@ -261,6 +295,10 @@
             <div class="hub-panel" id="panel-archives" role="tabpanel" hidden>
               <p class="panel-intro">用于归档参考资料、学习线索、视觉板和阶段记录。</p>
               <div class="item-list" id="archive-list"></div>
+              <div class="member-admin-block">
+                <p class="panel-intro">成员名单总览</p>
+                <div class="member-grid" id="archive-member-list"></div>
+              </div>
             </div>
           </div>
 

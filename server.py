@@ -23,6 +23,7 @@ DATA_DIR = ROOT / "data"
 CONTENT_FILE = DATA_DIR / "content.json"
 SUBMISSIONS_FILE = DATA_DIR / "submissions.json"
 PUBLISHED_MEMBERS_FILE = DATA_DIR / "published_members.json"
+RELEASES_FILE = DATA_DIR / "releases.json"
 DATA_LOCK = threading.Lock()
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ADMIN_KEY = os.getenv("SUBZERO_ADMIN_KEY", "subzero-local-admin")
@@ -86,8 +87,9 @@ def clone_default_content():
     return copy.deepcopy(DEFAULT_CONTENT)
 
 
-def build_public_content(published_members):
+def build_public_content(published_members, uploaded_releases):
     content = clone_default_content()
+    content["releases"] = list(uploaded_releases) + content["releases"]
     content["members"] = content["members"] + list(published_members)
     return content
 
@@ -109,6 +111,8 @@ class JsonStorage:
 
         if not PUBLISHED_MEMBERS_FILE.exists():
             save_json(PUBLISHED_MEMBERS_FILE, static_published_members)
+        if not RELEASES_FILE.exists():
+            save_json(RELEASES_FILE, [])
 
         if static_published_members or content.get("members", []) != [contact_member]:
             content["members"] = [contact_member]
@@ -116,7 +120,13 @@ class JsonStorage:
 
     def public_content(self):
         published_members = load_json(PUBLISHED_MEMBERS_FILE)
-        return build_public_content(published_members)
+        uploaded_releases = load_json(RELEASES_FILE)
+        return build_public_content(published_members, uploaded_releases)
+
+    def list_releases(self):
+        releases = load_json(RELEASES_FILE)
+        releases.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+        return releases
 
     def list_submissions(self):
         submissions = load_json(SUBMISSIONS_FILE)
@@ -142,6 +152,21 @@ class JsonStorage:
             submissions = load_json(SUBMISSIONS_FILE)
             submissions.append(entry)
             save_json(SUBMISSIONS_FILE, submissions)
+        return entry
+
+    def create_release(self, title, creator, category, summary, contact):
+        entry = {
+            "id": uuid.uuid4().hex[:10],
+            "title": title,
+            "summary": summary,
+            "meta": [creator, category, "成员投稿"],
+            "contact": contact,
+            "created_at": utc_now(),
+        }
+        with DATA_LOCK:
+            releases = load_json(RELEASES_FILE)
+            releases.insert(0, entry)
+            save_json(RELEASES_FILE, releases)
         return entry
 
     def review_submission(self, target_id, decision, publish):
@@ -233,10 +258,34 @@ class PostgresStorage:
                     )
                     """
                 )
+                cursor.execute(
+                    """
+                    create table if not exists releases (
+                        id text primary key,
+                        title text not null,
+                        summary text not null,
+                        meta text not null,
+                        contact text not null,
+                        created_at text not null
+                    )
+                    """
+                )
             conn.commit()
 
     def public_content(self):
-        return build_public_content(self.list_published_members())
+        return build_public_content(self.list_published_members(), self.list_releases())
+
+    def list_releases(self):
+        with self._connect() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute("select id, title, summary, meta, contact, created_at from releases order by created_at desc")
+                rows = [dict(row) for row in cursor.fetchall()]
+        for row in rows:
+            try:
+                row["meta"] = json.loads(row.get("meta", "[]"))
+            except json.JSONDecodeError:
+                row["meta"] = []
+        return rows
 
     def list_submissions(self):
         with self._connect() as conn:
@@ -279,6 +328,34 @@ class PostgresStorage:
                         entry["created_at"],
                         entry["published_member_id"],
                         entry["reviewed_at"],
+                    ),
+                )
+            conn.commit()
+        return entry
+
+    def create_release(self, title, creator, category, summary, contact):
+        entry = {
+            "id": uuid.uuid4().hex[:10],
+            "title": title,
+            "summary": summary,
+            "meta": [creator, category, "成员投稿"],
+            "contact": contact,
+            "created_at": utc_now(),
+        }
+        with self._connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    insert into releases (id, title, summary, meta, contact, created_at)
+                    values (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        entry["id"],
+                        entry["title"],
+                        entry["summary"],
+                        json.dumps(entry["meta"], ensure_ascii=False),
+                        entry["contact"],
+                        entry["created_at"],
                     ),
                 )
             conn.commit()
@@ -398,6 +475,9 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/applications":
             self._handle_application()
             return
+        if parsed.path == "/api/releases":
+            self._handle_release_submit()
+            return
         if parsed.path == "/api/admin/review":
             if not self._is_admin(parsed):
                 self._send_json({"error": "forbidden"}, HTTPStatus.FORBIDDEN)
@@ -422,6 +502,19 @@ class SubzeroHandler(SimpleHTTPRequestHandler):
             self._send_json({"error": "missing fields"}, HTTPStatus.BAD_REQUEST)
             return
         entry = STORAGE.create_submission(name, focus, contact, bio)
+        self._send_json({"ok": True, "id": entry["id"]}, HTTPStatus.CREATED)
+
+    def _handle_release_submit(self):
+        payload = self._read_json()
+        title = str(payload.get("title", "")).strip()
+        creator = str(payload.get("creator", "")).strip()
+        category = str(payload.get("category", "")).strip()
+        summary = str(payload.get("summary", "")).strip()
+        contact = str(payload.get("contact", "")).strip()
+        if not all([title, creator, category, summary, contact]):
+            self._send_json({"error": "missing fields"}, HTTPStatus.BAD_REQUEST)
+            return
+        entry = STORAGE.create_release(title, creator, category, summary, contact)
         self._send_json({"ok": True, "id": entry["id"]}, HTTPStatus.CREATED)
 
     def _handle_review(self):
