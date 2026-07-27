@@ -144,28 +144,36 @@
       <section class="sound section-shell" id="sound">
         <div class="section-index">02 / 音乐档案</div>
         <div class="sound-grid">
-          <h1 class="sound-title reveal">音乐档案<br />声音入场</h1>
+          <div class="sound-heading reveal">
+            <h1 class="sound-title">音乐档案<br />声音入场</h1>
+            <p class="sound-subline">这里公开展示成员的单曲、demo、beat 和其他音乐发布。</p>
+          </div>
           <div class="sound-notes reveal">
             <p>声音是情绪的另一种形式。SUBZERO 收录独立音乐作品，通过音乐与视觉的结合，构建完整的艺术体验。</p>
             <dl>
-              <div><dt>01</dt><dd>艺术家</dd></div>
-              <div><dt>02</dt><dd>专辑</dd></div>
-              <div><dt>03</dt><dd>单曲</dd></div>
-              <div><dt>04</dt><dd>发行作品</dd></div>
+              <div><dt>01</dt><dd>成员作者</dd></div>
+              <div><dt>02</dt><dd>单曲 / Demo</dd></div>
+              <div><dt>03</dt><dd>Beat / 制作</dd></div>
+              <div><dt>04</dt><dd>公开发布记录</dd></div>
             </dl>
           </div>
         </div>
+        <div class="showcase-list sound-showcase reveal" id="music-release-list"></div>
       </section>
 
       <section class="art section-shell" id="art">
         <div class="section-index">03 / 视觉档案</div>
         <div class="art-copy reveal">
           <p class="art-title">视觉档案<br />图像发声</p>
-          <p>每一幅图像，都是一种声音。我们探索插画、数字艺术、概念设计与视觉叙事之间的联系。</p>
+          <p>每一幅图像，都是一种声音。这里公开展示成员的插画、海报、专辑视觉、摄影和概念设定。</p>
           <p>视觉输出不只是配图，而是和音乐并行生长的内容系统，用图像延展情绪、世界观与叙述方式。</p>
         </div>
         <div class="art-board reveal">
-          <img src="assets/subzero-wordmark-v2.svg" alt="SUBZERO 新 logo 展示板" />
+          <div class="showcase-list visual-showcase" id="visual-release-list"></div>
+          <div class="art-board-badge">
+            <span>VISUAL ARCHIVE</span>
+            <strong>插画 / 海报 / 摄影 / 概念设定</strong>
+          </div>
         </div>
       </section>
 
@@ -231,7 +239,7 @@
             </div>
 
             <div class="hub-panel" id="panel-releases" role="tabpanel" hidden>
-              <p class="panel-intro">成员可以在这里提交作品信息，发布后会直接展示在这一区域。</p>
+              <p class="panel-intro">成员在这里投稿作品。系统会按作品类型自动分流到“音乐档案”或“视觉档案”。</p>
               <form class="apply-form" id="release-submit-form">
                 <h3>提交作品发布</h3>
                 <label>
@@ -266,6 +274,7 @@
                 <button class="submit-button" type="submit">上传作品</button>
                 <p class="form-status" id="release-status" aria-live="polite"></p>
               </form>
+              <p class="panel-intro">最近发布</p>
               <div class="item-list" id="release-list"></div>
             </div>
 

@@ -40,6 +40,8 @@ const focusSelect = document.querySelector("#focus-select");
 const focusOtherWrap = document.querySelector("#focus-other-wrap");
 const focusOtherInput = document.querySelector("#focus-other-input");
 const releaseList = document.querySelector("#release-list");
+const musicReleaseList = document.querySelector("#music-release-list");
+const visualReleaseList = document.querySelector("#visual-release-list");
 const memberList = document.querySelector("#member-list");
 const eventList = document.querySelector("#event-list");
 const archiveList = document.querySelector("#archive-list");
@@ -72,11 +74,13 @@ const fallbackContent = {
       title: "地下频段 / 发布筹备",
       summary: "整理首批公开页面内容，包含音乐、视觉和项目文案。",
       meta: ["音乐", "视觉", "进行中"],
+      section: "music",
     },
     {
       title: "冰层之下 / 项目推进",
       summary: "以音乐、插画、海报设计和概念设定同步构建虚拟世界。",
       meta: ["项目", "世界观", "持续更新"],
+      section: "visual",
     },
   ],
   members: [
@@ -296,7 +300,12 @@ function createMemberCard(member) {
 }
 
 function renderContent(content) {
-  renderCards(releaseList, content.releases || [], createItemCard);
+  const releases = content.releases || [];
+  const musicReleases = releases.filter((item) => item.section === "music");
+  const visualReleases = releases.filter((item) => item.section === "visual");
+  renderCards(releaseList, releases, createItemCard);
+  renderCards(musicReleaseList, musicReleases, createItemCard);
+  renderCards(visualReleaseList, visualReleases, createItemCard);
   renderCards(memberList, content.members || [], createMemberCard);
   renderCards(eventList, content.events || [], createItemCard);
   renderCards(archiveList, content.archives || [], createItemCard);
@@ -361,7 +370,7 @@ releaseForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     releaseForm.reset();
-    releaseStatus.textContent = "作品已提交，作品发布页已更新。";
+    releaseStatus.textContent = "作品已提交，系统已按类型分流到音乐档案或视觉档案。";
     await loadPublicContent();
   } catch (error) {
     releaseStatus.textContent = HAS_API ? "上传失败，请稍后再试。" : "上传失败。当前页面还没有连接到作品服务。";

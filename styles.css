@@ -1288,8 +1288,41 @@ main {
   gap: 7vw;
 }
 
+.sound-heading {
+  display: grid;
+  gap: 16px;
+}
+
+.sound-subline {
+  max-width: 520px;
+  margin: 0;
+  color: var(--yellow);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
 .sound-notes {
   transform: rotate(2deg);
+}
+
+.showcase-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.sound-showcase {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sound-showcase .item-card {
+  background: rgba(255, 245, 229, 0.98);
+  box-shadow: 7px 7px 0 var(--red);
+}
+
+.visual-showcase .item-card {
+  box-shadow: 7px 7px 0 var(--yellow);
 }
 
 dl {
@@ -1352,17 +1385,50 @@ dd {
 .art-board {
   position: relative;
   z-index: 1;
-  padding: 12px;
+  display: grid;
+  gap: 18px;
+  padding: 16px;
   border: 7px solid var(--black);
   background: var(--paper);
   box-shadow: 12px 12px 0 var(--red);
   transform: rotate(2deg);
 }
 
-.art-board img {
-  display: block;
-  width: 100%;
-  height: auto;
+.art-board-badge {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 4px solid var(--black);
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.art-board-badge span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.art-board-badge strong {
+  font-family: var(--display);
+  font-size: clamp(22px, 2vw, 34px);
+  line-height: 0.95;
+}
+
+.showcase-list .item-card {
+  transform: translateY(0);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.showcase-list .item-card:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+
+.showcase-list .item-card strong::after {
+  content: "↗";
+  margin-left: 10px;
+  color: var(--red);
+  font-size: 0.72em;
 }
 
 .project {

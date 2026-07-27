@@ -36,11 +36,13 @@ DEFAULT_CONTENT = {
             "title": "地下频段 / 发布筹备",
             "summary": "整理首批公开页面内容，包含音乐、视觉和项目文案。",
             "meta": ["音乐", "视觉", "进行中"],
+            "section": "music",
         },
         {
             "title": "冰层之下 / 项目推进",
             "summary": "以音乐、插画、海报设计和概念设定同步构建虚拟世界。",
             "meta": ["项目", "世界观", "持续更新"],
+            "section": "visual",
         },
     ],
     "members": [
@@ -92,6 +94,12 @@ def build_public_content(published_members, uploaded_releases):
     content["releases"] = list(uploaded_releases) + content["releases"]
     content["members"] = content["members"] + list(published_members)
     return content
+
+
+def infer_release_section(category: str) -> str:
+    music_tokens = ("音乐", "单曲", "demo", "beat", "制作", "mixtape", "说唱", "dj")
+    lowered = category.lower()
+    return "music" if any(token in lowered for token in music_tokens) else "visual"
 
 
 class JsonStorage:
@@ -160,6 +168,7 @@ class JsonStorage:
             "title": title,
             "summary": summary,
             "meta": [creator, category, "成员投稿"],
+            "section": infer_release_section(category),
             "contact": contact,
             "created_at": utc_now(),
         }
@@ -265,11 +274,13 @@ class PostgresStorage:
                         title text not null,
                         summary text not null,
                         meta text not null,
+                        section text not null default 'visual',
                         contact text not null,
                         created_at text not null
                     )
                     """
                 )
+                cursor.execute("alter table releases add column if not exists section text not null default 'visual'")
             conn.commit()
 
     def public_content(self):
@@ -278,13 +289,14 @@ class PostgresStorage:
     def list_releases(self):
         with self._connect() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute("select id, title, summary, meta, contact, created_at from releases order by created_at desc")
+                cursor.execute("select id, title, summary, meta, section, contact, created_at from releases order by created_at desc")
                 rows = [dict(row) for row in cursor.fetchall()]
         for row in rows:
             try:
                 row["meta"] = json.loads(row.get("meta", "[]"))
             except json.JSONDecodeError:
                 row["meta"] = []
+            row["section"] = row.get("section") or infer_release_section(" ".join(row["meta"]))
         return rows
 
     def list_submissions(self):
@@ -339,6 +351,7 @@ class PostgresStorage:
             "title": title,
             "summary": summary,
             "meta": [creator, category, "成员投稿"],
+            "section": infer_release_section(category),
             "contact": contact,
             "created_at": utc_now(),
         }
@@ -346,14 +359,15 @@ class PostgresStorage:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    insert into releases (id, title, summary, meta, contact, created_at)
-                    values (%s, %s, %s, %s, %s, %s)
+                    insert into releases (id, title, summary, meta, section, contact, created_at)
+                    values (%s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         entry["id"],
                         entry["title"],
                         entry["summary"],
                         json.dumps(entry["meta"], ensure_ascii=False),
+                        entry["section"],
                         entry["contact"],
                         entry["created_at"],
                     ),
